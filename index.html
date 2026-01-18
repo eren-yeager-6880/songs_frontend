@@ -46,6 +46,20 @@
     color:transparent;
   }
 
+  /* Home button */
+  #homeButton {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 100;
+    background: none;
+    border: none;
+    color: white;
+  }
+
   /* Live‑Radio button */
   .live-radio-btn{
     display:block;
@@ -118,6 +132,35 @@
     justify-content:center;
     cursor:pointer;
     font-size:16px;
+  }
+
+  /* Archive button */
+  .archive-btn{
+    position:absolute;
+    top:10px;
+    right:50px;
+    background:rgba(0,0,0,0.5);
+    color:#fff;
+    border:none;
+    border-radius:50%;
+    width:30px;
+    height:30px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+  }
+
+  /* Open button */
+  .open-btn{
+    margin-top: 10px;
+    padding: 5px 10px;
+    background: #ff7043;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
   }
 
   /* ---------- Player Page ---------- */
@@ -253,9 +296,46 @@
     transition:opacity .5s;
     z-index:1500;
   }
+
+  /* Fullscreen container */
+  #fullscreenContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: black;
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #fullscreenImage {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+  }
+  
+  #closeFullscreen {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10001;
+  }
 </style>
 </head>
 <body>
+
+<button id="homeButton">🏠</button>
 
 <h2 class="title">SoundCloud <span>🎧</span></h2>
 <p class="under-title">Every song has a place.</p>
@@ -297,6 +377,12 @@
   <iframe id="liveRadioIframe" src=""></iframe>
 </div>
 
+<!-- Fullscreen container for images -->
+<div id="fullscreenContainer">
+  <button id="closeFullscreen">✖</button>
+  <img id="fullscreenImage" src="" alt="Fullscreen Image">
+</div>
+
 <div id="toast"></div>
 
 <footer class="footer">© 2026 SoundCloud· Built with ❤️ by YAN</footer>
@@ -321,6 +407,10 @@ const liveRadioOverlay  = document.getElementById('liveRadioOverlay');
 const closeLiveRadioBtn = document.getElementById('closeLiveRadio');
 const liveRadioIframe   = document.getElementById('liveRadioIframe');
 const modeContainer     = document.getElementById('modeContainer');
+const homeButton        = document.getElementById('homeButton');
+const fullscreenContainer = document.getElementById('fullscreenContainer');
+const fullscreenImage     = document.getElementById('fullscreenImage');
+const closeFullscreen     = document.getElementById('closeFullscreen');
 
 let widget          = null;          // SoundCloud widget
 let currentPlaylist = [];           // array of tracks
@@ -386,14 +476,16 @@ function renderPlaylists(){
     card.innerHTML = `
       <span class="id-badge">ID: ${pl.id}</span>
       <button class="share-btn" title="Share">🔗</button>
+      <button class="archive-btn" title="GameVault">⛶</button>
       <img src="${pl.image_url}" alt="${pl.title}">
       <h3>${pl.title}</h3>
       <p>${pl.description}</p>
+      <button class="open-btn">Open</button>
     `;
 
-    // Open player (ignore share button)
-    card.addEventListener('click', e=>{
-      if(e.target.classList.contains('share-btn')) return;
+    // Open player (ignore share/archive buttons)
+    card.querySelector('.open-btn').addEventListener('click', e=>{
+      e.stopPropagation();
       openPlaylistPage(pl.playlist_link);
     });
 
@@ -402,6 +494,13 @@ function renderPlaylists(){
         .addEventListener('click', e=>{
           e.stopPropagation();
           sharePlaylist(pl);
+        });
+
+    // Archive button
+    card.querySelector('.archive-btn')
+        .addEventListener('click', e=>{
+          e.stopPropagation();
+          openImageFullscreen(pl.image_url);
         });
 
     playlistContainer.appendChild(card);
@@ -521,6 +620,53 @@ closeLiveRadioBtn.addEventListener('click', ()=>{
   liveRadioIframe.src = '';
   liveRadioOverlay.style.display = 'none';
   document.body.style.overflow = '';
+});
+
+/* ---------- Home Button ---------- */
+homeButton.addEventListener('click', () => {
+  window.location.href = 'https://yan-shun-081.github.io/yan-1-website.com/';
+});
+
+/* ---------- Archive Fullscreen ---------- */
+function openImageFullscreen(imageUrl) {
+  fullscreenImage.src = imageUrl;
+  fullscreenContainer.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  
+  // Try to use native fullscreen API
+  if (fullscreenContainer.requestFullscreen) {
+    fullscreenContainer.requestFullscreen();
+  } else if (fullscreenContainer.mozRequestFullScreen) { /* Firefox */
+    fullscreenContainer.mozRequestFullScreen();
+  } else if (fullscreenContainer.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+    fullscreenContainer.webkitRequestFullscreen();
+  } else if (fullscreenContainer.msRequestFullscreen) { /* IE/Edge */
+    fullscreenContainer.msRequestFullscreen();
+  }
+}
+
+closeFullscreen.addEventListener('click', () => {
+  // Exit fullscreen if supported
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.mozCancelFullScreen) { /* Firefox */
+    document.mozCancelFullScreen();
+  } else if (document.webkitExitFullscreen) { /* Chrome, Safari & Opera */
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { /* IE/Edge */
+    document.msExitFullscreen();
+  }
+  
+  // Hide the container
+  fullscreenContainer.style.display = 'none';
+  document.body.style.overflow = '';
+});
+
+// Handle escape key to close fullscreen
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && fullscreenContainer.style.display === 'flex') {
+    closeFullscreen.click();
+  }
 });
 
 /* ---------- Data Load ---------- */
